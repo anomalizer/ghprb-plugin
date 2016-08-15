@@ -16,6 +16,8 @@ import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 
 import hudson.Util;
+import hudson.matrix.MatrixBuild;
+import hudson.model.AbstractBuild;
 import hudson.model.Cause;
 import hudson.model.Item;
 import hudson.model.Job;
@@ -264,7 +266,9 @@ public class Ghprb {
         Map<String, String> messageEnvVars = new HashMap<String, String>();
         if (build != null) {
                 messageEnvVars.putAll(build.getCharacteristicEnvVars());
-                messageEnvVars.putAll(build.getBuildVariables());
+                if(build instanceof AbstractBuild) {
+                    messageEnvVars.putAll(((AbstractBuild<?, ?>)build).getBuildVariables());
+                }
                 try {
                     messageEnvVars.putAll(build.getEnvironment(listener));
                 } catch (Exception e) {
