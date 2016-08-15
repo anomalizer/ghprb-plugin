@@ -3,6 +3,7 @@ package org.jenkinsci.plugins.ghprb.manager.factory;
 import com.cloudbees.plugins.flow.FlowRun;
 
 import hudson.model.AbstractBuild;
+import hudson.model.Run;
 import org.jenkinsci.plugins.ghprb.manager.configuration.JobConfiguration;
 import org.jenkinsci.plugins.ghprb.manager.GhprbBuildManager;
 import org.jenkinsci.plugins.ghprb.manager.impl.GhprbDefaultBuildManager;
@@ -27,7 +28,7 @@ public class GhprbBuildManagerFactoryUtil {
         return getBuildManager(build, jobConfiguration);
     }
 
-    public static GhprbBuildManager getBuildManager(AbstractBuild<?, ?> build, JobConfiguration jobConfiguration) {
+    public static GhprbBuildManager getBuildManager(Run<?, ?> build, JobConfiguration jobConfiguration) {
         try {
             if (build instanceof FlowRun) {
                 return new BuildFlowBuildManager(build, jobConfiguration);

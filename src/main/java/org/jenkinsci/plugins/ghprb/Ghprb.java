@@ -16,18 +16,19 @@ import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 
 import hudson.Util;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
 import hudson.model.Cause;
 import hudson.model.Item;
+import hudson.model.Job;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.Saveable;
 import hudson.model.TaskListener;
 import hudson.security.ACL;
+import hudson.triggers.Trigger;
 import hudson.util.DescribableList;
 import hudson.util.Secret;
 
+import jenkins.model.ParameterizedJobMixIn;
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.collections.PredicateUtils;
 import org.apache.commons.collections.functors.InstanceofPredicate;
@@ -63,7 +64,7 @@ public class Ghprb {
         logger.log(Level.INFO, "Adding {0} to whitelist", author);
         trigger.addWhitelist(author);
     }
-    
+
     public boolean isProjectDisabled() {
         return !trigger.isActive();
     }
@@ -90,7 +91,7 @@ public class Ghprb {
             return null;
         }
     }
-    
+
     private static boolean checkPattern(Pattern pattern, String comment) {
         return pattern != null && pattern.matcher(comment).matches();
     }
@@ -101,19 +102,19 @@ public class Ghprb {
     private Pattern retestPhrasePattern() {
         return compilePattern(trigger.getDescriptor().getRetestPhrase());
     }
-    
+
     /**
      * Returns skip build phrases from Jenkins global configuration
-     * 
+     *
      * @return skip build phrases
      */
     public Set<String> getSkipBuildPhrases() {
         return new HashSet<String>(Arrays.asList(getTrigger().getSkipBuildPhrase().split("[\\r\\n]+")));
     }
-    
+
     /**
      * Checks for skip build phrase in pull request title and body. If present it updates shouldRun as false.
-     * 
+     *
      * @param issue The GitHub issue
      * @return the skip phrase or null if should not skip
      */
@@ -156,7 +157,7 @@ public class Ghprb {
         }
         return null;
     }
-    
+
     private Pattern whitelistPhrasePattern() {
         return compilePattern(trigger.getDescriptor().getWhitelistPhrase());
     }
@@ -244,7 +245,7 @@ public class Ghprb {
         return trigger.getWhiteListTargetBranches();
     }
 
-    public static String replaceMacros(AbstractBuild<?, ?> build, TaskListener listener, String inputString) {
+    public static String replaceMacros(Run<?, ?> build, TaskListener listener, String inputString) {
         String returnString = inputString;
         if (build != null && inputString != null) {
             try {
@@ -258,8 +259,8 @@ public class Ghprb {
         }
         return returnString;
     }
-    
-    public static Map<String, String> getEnvVars(AbstractBuild<?, ?> build, TaskListener listener) {
+
+    public static Map<String, String> getEnvVars(Run<?, ?> build, TaskListener listener) {
         Map<String, String> messageEnvVars = new HashMap<String, String>();
         if (build != null) {
                 messageEnvVars.putAll(build.getCharacteristicEnvVars());
@@ -272,9 +273,9 @@ public class Ghprb {
         }
         return messageEnvVars;
     }
-    
 
-    public static String replaceMacros(AbstractProject<?, ?> project, String inputString) {
+
+    public static String replaceMacros(Job<?, ?> project, String inputString) {
         String returnString = inputString;
         if (project != null && inputString != null) {
             try {
@@ -290,8 +291,8 @@ public class Ghprb {
         }
         return returnString;
     }
-    
-    public static GHCommitState getState(AbstractBuild<?, ?> build) {
+
+    public static GHCommitState getState(Run<?, ?> build) {
 
         GHCommitState state;
         if (build.getResult() == Result.SUCCESS) {
@@ -311,7 +312,7 @@ public class Ghprb {
         listSet.remove("");
         return listSet;
     }
-    
+
 
     public static GhprbCause getCause(Run<?, ?> build) {
         Cause cause = build.getCause(GhprbCause.class);
@@ -320,20 +321,25 @@ public class Ghprb {
         }
         return (GhprbCause) cause;
     }
-    
 
-    public static GhprbTrigger extractTrigger(AbstractBuild<?, ?> build) {
-        return extractTrigger(build.getProject());
+
+    public static GhprbTrigger extractTrigger(Run<?, ?> build) {
+        return extractTrigger(build.getParent());
     }
 
-    public static GhprbTrigger extractTrigger(AbstractProject<?, ?> p) {
-        GhprbTrigger trigger = p.getTrigger(GhprbTrigger.class);
-        if (trigger == null || (!(trigger instanceof GhprbTrigger))) {
-            return null;
+    public static GhprbTrigger extractTrigger(Job<?, ?> project) {
+        if (project instanceof ParameterizedJobMixIn.ParameterizedJob) {
+            // TODO: After 1.621, use ParameterizedJobMixIn.getTrigger
+            ParameterizedJobMixIn.ParameterizedJob parameterizedJob = (ParameterizedJobMixIn.ParameterizedJob)project;
+            for (Trigger p : parameterizedJob.getTriggers().values()) {
+                if (GhprbTrigger.class.isInstance(p)) {
+                    return GhprbTrigger.class.cast(p);
+                }
+            }
         }
-        return trigger;
+        return null;
     }
-    
+
     private static List<Predicate> createPredicate(Class<?> ...types) {
         List<Predicate> predicates = new ArrayList<Predicate>(types.length);
         for (Class<?> type : types) {
@@ -341,7 +347,7 @@ public class Ghprb {
         }
         return predicates;
     }
-    
+
     public static void filterList(DescribableList<GhprbExtension, GhprbExtensionDescriptor> descriptors, Predicate predicate) {
         for (GhprbExtension descriptor : descriptors) {
             if (!predicate.evaluate(descriptor)) {
@@ -349,7 +355,7 @@ public class Ghprb {
             }
         }
     }
-    
+
     private static DescribableList<GhprbExtension, GhprbExtensionDescriptor> copyExtensions(DescribableList<GhprbExtension, GhprbExtensionDescriptor> ...extensionsList){
         DescribableList<GhprbExtension, GhprbExtensionDescriptor> copiedList = new DescribableList<GhprbExtension, GhprbExtensionDescriptor>(Saveable.NOOP);
         for (DescribableList<GhprbExtension, GhprbExtensionDescriptor> extensions: extensionsList) {
@@ -360,42 +366,42 @@ public class Ghprb {
 
     @SuppressWarnings("unchecked")
     public static DescribableList<GhprbExtension, GhprbExtensionDescriptor> getJobExtensions(GhprbTrigger trigger, Class<?> ...types) {
-        
+
         // First get all global extensions
         DescribableList<GhprbExtension, GhprbExtensionDescriptor> copied = copyExtensions(trigger.getDescriptor().getExtensions());
-        
+
         // Remove extensions that are specified by job
         filterList(copied, PredicateUtils.notPredicate(InstanceofPredicate.getInstance(GhprbProjectExtension.class)));
-        
+
         // Then get the rest of the extensions from the job
         copied = copyExtensions(copied, trigger.getExtensions());
-        
+
         // Filter extensions by desired interface
         filterList(copied, PredicateUtils.anyPredicate(createPredicate(types)));
         return copied;
     }
-    
+
     public static DescribableList<GhprbExtension, GhprbExtensionDescriptor> matchesAll(DescribableList<GhprbExtension, GhprbExtensionDescriptor> extensions, Class<?> ...types) {
         Predicate predicate = PredicateUtils.allPredicate(createPredicate(types));
         DescribableList<GhprbExtension, GhprbExtensionDescriptor> copyExtensions = new DescribableList<GhprbExtension, GhprbExtensionDescriptor>(Saveable.NOOP);
-        
+
         copyExtensions.addAll(extensions);
         filterList(copyExtensions, predicate);
         return copyExtensions;
     }
-    
+
     public static DescribableList<GhprbExtension, GhprbExtensionDescriptor> matchesSome(DescribableList<GhprbExtension, GhprbExtensionDescriptor> extensions, Class<?> ...types) {
         Predicate predicate = PredicateUtils.anyPredicate(createPredicate(types));
         DescribableList<GhprbExtension, GhprbExtensionDescriptor> copyExtensions = new DescribableList<GhprbExtension, GhprbExtensionDescriptor>(Saveable.NOOP);
-        
+
         copyExtensions.addAll(extensions);
         filterList(copyExtensions, predicate);
         return copyExtensions;
     }
-    
+
     public static DescribableList<GhprbExtension, GhprbExtensionDescriptor> onlyOneEntry(DescribableList<GhprbExtension, GhprbExtensionDescriptor> extensions, Class<?> ...types) {
         DescribableList<GhprbExtension, GhprbExtensionDescriptor> copyExtensions = new DescribableList<GhprbExtension, GhprbExtensionDescriptor>(Saveable.NOOP);
-        
+
         Set<Class<?>> extSet = new HashSet<Class<?>>(types.length);
         List<Predicate> predicates = createPredicate(types);
         for (GhprbExtension extension: extensions) {
@@ -403,10 +409,10 @@ public class Ghprb {
                 copyExtensions.add(extension);
             }
         }
-        
+
         return copyExtensions;
     }
-    
+
     private static boolean addExtension(GhprbExtension extension, List<Predicate> predicates, Set<Class<?>> extSet) {
         for (Predicate predicate: predicates) {
             if (predicate.evaluate(extension)) {
@@ -421,7 +427,7 @@ public class Ghprb {
         }
         return true;
     }
-    
+
     public static void addIfMissing(DescribableList<GhprbExtension, GhprbExtensionDescriptor> extensions, GhprbExtension ext, Class<?> type) {
         if (ext == null) {
             return;
@@ -441,76 +447,76 @@ public class Ghprb {
             contextName = context.getFullName();
         }
         logger.log(Level.FINE, "Looking up credentials for {0}, using context {1} for url {2}", new Object[] { credentialId, contextName, uri });
-        
+
         List<StandardCredentials> credentials;
-        
+
         logger.log(Level.FINE, "Using null context because of issues not getting all credentias");
-        
+
         credentials = CredentialsProvider.lookupCredentials(StandardCredentials.class, (Item) null, ACL.SYSTEM,
                 URIRequirementBuilder.fromUri(uri).build());
-        
+
         logger.log(Level.FINE, "Found {0} credentials", new Object[]{credentials.size()});
-        
+
         return (credentialId == null) ? null : CredentialsMatchers.firstOrNull(credentials,
                     CredentialsMatchers.withId(credentialId));
     }
-    
+
     public static String createCredentials(String serverAPIUrl, String token) throws Exception {
         String description = serverAPIUrl + " GitHub auto generated token credentials";
         StringCredentialsImpl credentials = new StringCredentialsImpl(
-                CredentialsScope.GLOBAL, 
-                UUID.randomUUID().toString(), 
-                description, 
+                CredentialsScope.GLOBAL,
+                UUID.randomUUID().toString(),
+                description,
                 Secret.fromString(token));
         return createCredentials(serverAPIUrl, credentials);
     }
-    
+
     public static String createCredentials(String serverAPIUrl, String username, String password) throws Exception {
         String description = serverAPIUrl + " GitHub auto generated Username password credentials";
         UsernamePasswordCredentialsImpl credentials = new UsernamePasswordCredentialsImpl(
-                CredentialsScope.GLOBAL, 
+                CredentialsScope.GLOBAL,
                 UUID.randomUUID().toString(),
                 description,
                 username,
                 password);
         return createCredentials(serverAPIUrl, credentials);
     }
-    
+
     private static String createCredentials(String serverAPIUrl, StandardCredentials credentials) throws Exception {
         List<DomainSpecification> specifications = new ArrayList<DomainSpecification>(2);
-        
+
         URI serverUri = new URI(serverAPIUrl);
-        
+
         if (serverUri.getPort() > 0) {
             specifications.add(new HostnamePortSpecification(serverUri.getHost() + ":" + serverUri.getPort(), null));
         } else {
             specifications.add(new HostnameSpecification(serverUri.getHost(), null));
         }
-        
+
         specifications.add(new SchemeSpecification(serverUri.getScheme()));
         String path = serverUri.getPath();
         if (StringUtils.isEmpty(path)) {
             path = "/";
         }
         specifications.add(new PathSpecification(path, null, false));
-        
+
         Domain domain = new Domain(serverUri.getHost(), "Auto generated credentials domain", specifications);
         CredentialsStore provider = new SystemCredentialsProvider.StoreImpl();
         provider.addDomain(domain, credentials);
         return credentials.getId();
     }
-    
+
     public static <T extends GhprbExtension> T getGlobal(Class<T> clazz) {
         DescribableList<GhprbExtension, GhprbExtensionDescriptor> copyExtensions = new DescribableList<GhprbExtension, GhprbExtensionDescriptor>(Saveable.NOOP);
 
         copyExtensions.addAll(GhprbTrigger.DESCRIPTOR.getExtensions());
-        
+
         filterList(copyExtensions, InstanceofPredicate.getInstance(clazz));
-        
+
         return copyExtensions.get(clazz);
     }
-    
-    
+
+
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public static <T, S extends GhprbExtension> T getDefaultValue(S local, Class<S> globalClass, String methodName) {
@@ -525,7 +531,7 @@ public class Ghprb {
             } else if (global == null) {
                 return (T) local.getClass().getMethod(methodName).invoke(local);
             }
-            
+
             T localValue = (T) local.getClass().getMethod(methodName).invoke(local);
             T globalValue = (T) global.getClass().getMethod(methodName).invoke(global);
 

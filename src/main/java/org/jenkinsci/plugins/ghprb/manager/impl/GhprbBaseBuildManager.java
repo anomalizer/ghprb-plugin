@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import hudson.model.Run;
 import jenkins.model.Jenkins;
 
-import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Result;
 import hudson.tasks.test.AbstractTestResultAction;
@@ -27,12 +27,12 @@ import org.jenkinsci.plugins.ghprb.manager.GhprbBuildManager;
  */
 public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
 
-    public GhprbBaseBuildManager(AbstractBuild<?, ?> build) {
+    public GhprbBaseBuildManager(Run<?, ?> build) {
         this.build = build;
         this.jobConfiguration = buildDefaultConfiguration();
     }
 
-    public GhprbBaseBuildManager(AbstractBuild<?, ?> build, JobConfiguration jobConfiguration) {
+    public GhprbBaseBuildManager(Run<?, ?> build, JobConfiguration jobConfiguration) {
         this.build = build;
         this.jobConfiguration = jobConfiguration;
     }
@@ -58,7 +58,7 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
      * @return the downstream builds as an iterator
      */
     public Iterator<?> downstreamProjects() {
-        List<AbstractBuild<?, ?>> downstreamList = new ArrayList<AbstractBuild<?, ?>>();
+        List<Run<?, ?>> downstreamList = new ArrayList<Run<?, ?>>();
 
         downstreamList.add(build);
 
@@ -78,7 +78,7 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
         return getAggregatedTestResults(build);
     }
 
-    protected String getAggregatedTestResults(AbstractBuild<?, ?> build) {
+    protected String getAggregatedTestResults(Run<?, ?> build) {
         AggregatedTestResultAction testResultAction = build.getAction(AggregatedTestResultAction.class);
 
         if (testResultAction == null) {
@@ -180,7 +180,7 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
         return String.format("%d tests run, %d skipped, %d failed.", testResultAction.getTotalCount(), testResultAction.getSkipCount(), testResultAction.getFailCount());
     }
 
-    protected AbstractBuild<?, ?> build;
+    protected Run<?, ?> build;
 
     private static final int _MAX_LINES_COUNT = 25;
 

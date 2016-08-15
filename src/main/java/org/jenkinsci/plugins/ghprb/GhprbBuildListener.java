@@ -15,10 +15,10 @@ import hudson.model.listeners.RunListener;
  * @author janinko
  */
 @Extension
-public class GhprbBuildListener extends RunListener<AbstractBuild<?, ?>> {
+public class GhprbBuildListener extends RunListener<Run<?, ?>> {
 
     @Override
-    public void onStarted(AbstractBuild<?, ?> build, TaskListener listener) {
+    public void onStarted(Run<?, ?> build, TaskListener listener) {
         GhprbTrigger trigger = Ghprb.extractTrigger(build);
         if (trigger != null && trigger.getBuilds() != null) {
             trigger.getBuilds().onStarted(build, listener);
@@ -26,7 +26,7 @@ public class GhprbBuildListener extends RunListener<AbstractBuild<?, ?>> {
     }
 
     @Override
-    public void onCompleted(AbstractBuild<?, ?> build, TaskListener listener) {
+    public void onCompleted(Run<?, ?> build, TaskListener listener) {
         GhprbTrigger trigger = Ghprb.extractTrigger(build);
         if (trigger != null && trigger.getBuilds() != null) {
             trigger.getBuilds().onCompleted(build, listener);

@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import hudson.Extension;
+import hudson.model.Run;
 import hudson.model.TaskListener;
-import hudson.model.AbstractBuild;
 
 import org.jenkinsci.plugins.ghprb.Ghprb;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommentAppender;
@@ -31,7 +31,8 @@ public class GhprbBuildStatus extends GhprbExtension implements GhprbCommentAppe
         return messages == null ? new ArrayList<GhprbBuildResultMessage>(0) : messages;
     }
 
-    public String postBuildComment(AbstractBuild<?, ?> build, TaskListener listener) {
+    @Override
+    public String postBuildComment(Run<?, ?> build, TaskListener listener) {
         StringBuilder msg = new StringBuilder();
         
         List<GhprbBuildResultMessage> messages = getDescriptor().getMessagesDefault(this);

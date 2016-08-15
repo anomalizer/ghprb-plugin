@@ -1,8 +1,8 @@
 package org.jenkinsci.plugins.ghprb.extensions.comments;
 
 import hudson.Extension;
-import hudson.model.AbstractBuild;
 import hudson.model.AbstractDescribableImpl;
+import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.Descriptor;
 import hudson.util.ListBoxModel;
@@ -36,7 +36,8 @@ public class GhprbBuildResultMessage extends AbstractDescribableImpl<GhprbBuildR
         return result;
     }
 
-    public String postBuildComment(AbstractBuild<?, ?> build, TaskListener listener) {
+    @Override
+    public String postBuildComment(Run<?, ?> build, TaskListener listener) {
         StringBuilder msg = new StringBuilder();
 
         GHCommitState state = Ghprb.getState(build);

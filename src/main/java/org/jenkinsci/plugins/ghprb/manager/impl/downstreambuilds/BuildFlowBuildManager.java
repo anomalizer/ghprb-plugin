@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import hudson.model.Run;
 import org.jenkinsci.plugins.ghprb.manager.impl.GhprbBaseBuildManager;
 import org.jenkinsci.plugins.ghprb.manager.configuration.JobConfiguration;
 import org.jgrapht.DirectedGraph;
@@ -21,11 +22,11 @@ public class BuildFlowBuildManager extends GhprbBaseBuildManager {
 
     private static final Logger logger = Logger.getLogger(BuildFlowBuildManager.class.getName());
 
-    public BuildFlowBuildManager(AbstractBuild<?, ?> build) {
+    public BuildFlowBuildManager(Run<?, ?> build) {
         super(build);
     }
 
-    public BuildFlowBuildManager(AbstractBuild<?, ?> build, JobConfiguration jobConfiguration) {
+    public BuildFlowBuildManager(Run<?, ?> build, JobConfiguration jobConfiguration) {
         super(build, jobConfiguration);
     }
 

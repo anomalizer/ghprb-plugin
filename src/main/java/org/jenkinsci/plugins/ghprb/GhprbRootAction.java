@@ -1,7 +1,7 @@
 package org.jenkinsci.plugins.ghprb;
 
 import hudson.Extension;
-import hudson.model.AbstractProject;
+import hudson.model.Job;
 import hudson.model.UnprotectedRootAction;
 import hudson.security.ACL;
 import hudson.security.csrf.CrumbExclusion;
@@ -293,9 +293,9 @@ public class GhprbRootAction implements UnprotectedRootAction {
                                           String signature) {
         Set<GhprbTrigger> triggers = new HashSet<GhprbTrigger>();
 
-        Set<AbstractProject<?, ?>> projects = GhprbTrigger.getDscp().getRepoTriggers(repoName);
+        Set<Job<?, ?>> projects = GhprbTrigger.getDscp().getRepoTriggers(repoName);
         if (projects != null) {
-            for (AbstractProject<?, ?> project : projects) {
+            for (Job<?, ?> project : projects) {
                 GhprbTrigger trigger = Ghprb.extractTrigger(project);
                 if (trigger == null) {
                     logger.log(Level.WARNING,

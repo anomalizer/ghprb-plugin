@@ -2,9 +2,9 @@ package org.jenkinsci.plugins.ghprb;
 
 import hudson.BulkChange;
 import hudson.XmlFile;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
 import hudson.model.Items;
+import hudson.model.Job;
+import hudson.model.Run;
 import hudson.model.Saveable;
 import hudson.model.TaskListener;
 import hudson.model.listeners.SaveableListener;
@@ -184,7 +184,7 @@ public class GhprbRepository implements Saveable{
         }
     }
 
-    public void commentOnFailure(AbstractBuild<?, ?> build, TaskListener listener, GhprbCommitStatusException ex) {
+    public void commentOnFailure(Run<?, ?> build, TaskListener listener, GhprbCommitStatusException ex) {
         PrintStream stream = null;
         if (listener != null) {
             stream = listener.getLogger();
@@ -234,7 +234,7 @@ public class GhprbRepository implements Saveable{
         addComment(id, comment, null, null);
     }
 
-    public void addComment(int id, String comment, AbstractBuild<?, ?> build, TaskListener listener) {
+    public void addComment(int id, String comment, Run<?, ?> build, TaskListener listener) {
         if (comment.trim().isEmpty())
             return;
 
@@ -421,7 +421,7 @@ public class GhprbRepository implements Saveable{
         SaveableListener.fireOnChange(this, config);
     }
 
-    protected XmlFile getConfigXml(AbstractProject<?, ?> project) throws IOException {
+    protected XmlFile getConfigXml(Job<?, ?> project) throws IOException {
         try {
             String escapedRepoName = URLEncoder.encode(reponame, "UTF8");
             File file = new File(project.getBuildDir() + "/pullrequests", escapedRepoName);

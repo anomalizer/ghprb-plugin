@@ -3,9 +3,9 @@ package org.jenkinsci.plugins.ghprb.extensions.status;
 import hudson.Extension;
 import hudson.Util;
 import hudson.matrix.MatrixProject;
+import hudson.model.Job;
+import hudson.model.Run;
 import hudson.model.TaskListener;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -104,7 +104,8 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
         return true;
     }
 
-    public void onBuildTriggered(AbstractProject<?, ?> project,
+    @Override
+    public void onBuildTriggered(Job<?, ?> project,
                                  String commitSha,
                                  boolean isMergeable,
                                  int prId,
@@ -148,14 +149,16 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
         }
     }
 
-    public void onEnvironmentSetup(AbstractBuild<?, ?> build,
+    @Override
+    public void onEnvironmentSetup(Run<?, ?> build,
                                    TaskListener listener,
                                    GHRepository repo) throws GhprbCommitStatusException {
         // no need to create a commit here -- the onBuildStart() event will fire
         // soon and will respect's the user's settings for startedStatus.
     }
 
-    public void onBuildStart(AbstractBuild<?, ?> build,
+    @Override
+    public void onBuildStart(Run<?, ?> build,
                              TaskListener listener,
                              GHRepository repo) throws GhprbCommitStatusException {
         String startedStatus = getDescriptor().getStartedStatusDefault(this);
@@ -163,7 +166,7 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
         // If the showMatrixStatus checkbox is selected and the job is not a Matrix Job (Children
         // nodes), then don't post statuses
         boolean showMatrixStatus = getDescriptor().getShowMatrixStatusDefault(this);
-        if(showMatrixStatus && !(build.getProject() instanceof MatrixProject)){
+        if(showMatrixStatus && !(build.getParent() instanceof MatrixProject)){
             return;
         }
 
@@ -186,7 +189,8 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
         createCommitStatus(build, listener, sb.toString(), repo, GHCommitState.PENDING);
     }
 
-    public void onBuildComplete(AbstractBuild<?, ?> build,
+    @Override
+    public void onBuildComplete(Run<?, ?> build,
                                 TaskListener listener,
                                 GHRepository repo) throws GhprbCommitStatusException {
         List<GhprbBuildResultMessage> completedStatus = getDescriptor().getCompletedStatusDefault(this);
@@ -194,7 +198,7 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
 
         // If the showMatrixStatus checkbox is selected and the job is not a Matrix Job (Children
         // nodes), then don't post statuses
-        if(showMatrixStatus && !(build.getProject() instanceof MatrixProject)) {
+        if(showMatrixStatus && !(build.getParent() instanceof MatrixProject)) {
             return;
         }
 
@@ -232,7 +236,7 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
         createCommitStatus(build, listener, sb.toString(), repo, state);
     }
 
-    private void createCommitStatus(AbstractBuild<?, ?> build,
+    private void createCommitStatus(Run<?, ?> build,
                                     TaskListener listener,
                                     String message,
                                     GHRepository repo,

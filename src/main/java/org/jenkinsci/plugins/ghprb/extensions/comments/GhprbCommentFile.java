@@ -4,8 +4,8 @@ import java.io.File;
 import java.io.IOException;
 
 import hudson.Extension;
+import hudson.model.Run;
 import hudson.model.TaskListener;
-import hudson.model.AbstractBuild;
 
 import org.apache.commons.io.FileUtils;
 import org.jenkinsci.plugins.ghprb.Ghprb;
@@ -36,7 +36,8 @@ public class GhprbCommentFile extends GhprbExtension implements GhprbCommentAppe
         return false;
     }
 
-    public String postBuildComment(AbstractBuild<?, ?> build, TaskListener listener) {
+    @Override
+    public String postBuildComment(Run<?, ?> build, TaskListener listener) {
         StringBuilder msg = new StringBuilder();
         if (commentFilePath != null && !commentFilePath.isEmpty()) {
             try {

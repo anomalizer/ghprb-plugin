@@ -2,7 +2,7 @@ package org.jenkinsci.plugins.ghprb;
 
 import com.google.common.base.Joiner;
 
-import hudson.model.AbstractBuild;
+import hudson.model.Run;
 
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.github.GHCommitPointer;
@@ -677,7 +677,7 @@ public class GhprbPullRequest {
         return authorEmail;
     }
 
-    public void setBuild(AbstractBuild<?, ?> build) {
+    public void setBuild(Run<?, ?> build) {
         lastBuildId = build.getId();
     }
 

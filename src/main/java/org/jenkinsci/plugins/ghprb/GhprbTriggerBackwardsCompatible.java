@@ -1,9 +1,10 @@
 package org.jenkinsci.plugins.ghprb;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
+import antlr.ANTLRException;
+import hudson.model.AbstractProject;
+import hudson.model.Job;
+import hudson.triggers.Trigger;
+import hudson.util.DescribableList;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
@@ -13,13 +14,12 @@ import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbCommentFile;
 import org.jenkinsci.plugins.ghprb.extensions.status.GhprbSimpleStatus;
 import org.kohsuke.github.GHCommitState;
 
-import antlr.ANTLRException;
-import hudson.model.AbstractProject;
-import hudson.triggers.Trigger;
-import hudson.util.DescribableList;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 
-public abstract class GhprbTriggerBackwardsCompatible extends Trigger<AbstractProject<?, ?>> {
+public abstract class GhprbTriggerBackwardsCompatible extends Trigger<Job<?, ?>> {
     
     public abstract DescribableList<GhprbExtension, GhprbExtensionDescriptor> getExtensions();
     
