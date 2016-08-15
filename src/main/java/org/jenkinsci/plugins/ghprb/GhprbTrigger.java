@@ -233,7 +233,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         
         String name = project.getFullName();
 
-        if (!project.isDisabled()) {
+        if (project instanceof AbstractProject && !((AbstractProject)project).isDisabled()) {
             logger.log(Level.FINE, "Project is disabled, not starting trigger for job " + name);
             return;
         }
@@ -565,7 +565,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         if (super.job == null) {
             logger.log(Level.FINE, "Project was never set, start was never run");
             isActive = false;
-        } else if (super.job.isDisabled()) {
+        } else if (super.job instanceof AbstractProject && ((AbstractProject) super.job).isDisabled()) {
             logger.log(Level.FINE, "Project is disabled, ignoring trigger run call for job {0}", name);
             isActive = false;
         } else if (getRepository() == null) {
@@ -577,7 +577,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     }
     
     public GhprbRepository getRepository() {
-        if (this.repository == null && super.job != null && !super.job.isDisabled()) {
+        if (this.repository == null && super.job != null &&
+                super.job instanceof AbstractProject && !((AbstractProject) super.job).isDisabled()) {
             try {
                 this.initState();
             } catch (IOException e) {
